@@ -62,7 +62,7 @@ customers = ['East', 'South', 'Midwest', 'West']
 regional_demand = [1800, 1200, 1100, 1000]
 demand = dict(zip(customers, regional_demand))
 
-var_dict = LpVariable.dicts('',
+var_dict = LpVariable.dicts('Shipments_',
                             [(w, c) for w in warehouse for c in customers],
                             lowBound=0, cat='Integer')
 
@@ -75,16 +75,6 @@ costs = {('Atlanta', 'East'): 232,
  ('New York', 'South'): 232,
  ('New York', 'West'): 300}
 
-var_dict = {('Atlanta', 'East'): atle,
- ('Atlanta', 'Midwest'): atlm,
- ('Atlanta', 'South'): atls,
- ('Atlanta', 'West'): atlw,
- ('New York', 'East'): ne,
- ('New York', 'Midwest'): nm,
- ('New York', 'South'): ns,
- ('New York', 'West'): nw}
-
-
 # Define Objective
 model += lpSum([costs[(w, c)] * var_dict[(w, c)] for c in customers for w in warehouse])
 
@@ -93,4 +83,42 @@ for c in customers:
     model += lpSum([var_dict[(w, c)] for w in warehouse]) == demand[c]
 
 model.solve()
+
+'''
+Scheduling workers problem
+You are looking to hire workers to work in a warehouse. Each worker is expected to work 5 consecutive days and then 
+have two days off. The chart below has the estimated number of workers you will need each day. You are looking to hire 
+the minimum number of workers to handle the workload for each day.
+
+Expected Workload
+
+Day of Week	Employees Needed
+0 = Monday	31
+1 = Tuesday	45
+2 = Wednesday	40
+3 = Thursday	40
+4 = Friday	48
+5 = Saturday	30
+6 = Sunday	25
+
+'''
+
+# The class has been initialize, and x, days, and objective function defined
+model = LpProblem("Minimize Staffing", LpMinimize)
+days = list(range(7))
+x = LpVariable.dicts('staff_', days, lowBound=0, cat='Integer')
+model += lpSum([x[i] for i in days])
+
+# Define Constraints
+model += x[0] + x[3] + x[4] + x[5] + x[6] >= 31
+model += x[0] + x[1] + x[4] + x[5] + x[6] >= 45
+model += x[0] + x[1] + x[2] + x[5] + x[6] >= 40
+model += x[0] + x[1] + x[2] + x[3] + x[6] >= 40
+model += x[0] + x[1] + x[2] + x[3] + x[4] >= 48
+model += x[1] + x[2] + x[3] + x[4] + x[5] >= 30
+model += x[2] + x[3] + x[4] + x[5] + x[6] >= 25
+
+model.solve()
+
+
 
